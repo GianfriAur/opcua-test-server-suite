@@ -1,0 +1,14 @@
+{
+  "name": "opcua-test-server-suite",
+  "version": "1.0.0",
+  "description": "Comprehensive OPC UA test server for client library testing",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "generate-certs": "bash scripts/generate-certs.sh"
+  },
+  "dependencies": {
+    "node-opcua": "^2.133.0",
+    "node-opcua-pki": "^4.16.0"
+  }
+}

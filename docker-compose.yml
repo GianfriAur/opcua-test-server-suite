@@ -1,0 +1,194 @@
+services:
+
+  certs-generator:
+    image: alpine:3.19
+    command: >
+      sh -c "apk add --no-cache openssl bash && bash /scripts/generate-certs.sh"
+    volumes:
+      - certs-volume:/certs
+      - ./scripts/generate-certs.sh:/scripts/generate-certs.sh:ro
+    environment:
+      CERTS_DIR: /certs
+
+  opcua-no-security:
+    build: .
+    ports:
+      - "4840:4840"
+    environment:
+      OPCUA_PORT: "4840"
+      OPCUA_SERVER_NAME: "NoSecurityServer"
+      OPCUA_SECURITY_POLICIES: "None"
+      OPCUA_SECURITY_MODES: "None"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "false"
+      OPCUA_AUTH_CERTIFICATE: "false"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-userpass:
+    build: .
+    ports:
+      - "4841:4841"
+    environment:
+      OPCUA_PORT: "4841"
+      OPCUA_SERVER_NAME: "UserPassServer"
+      OPCUA_SECURITY_POLICIES: "Basic256Sha256"
+      OPCUA_SECURITY_MODES: "SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "false"
+      OPCUA_AUTH_USERS: "true"
+      OPCUA_AUTH_CERTIFICATE: "false"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-certificate:
+    build: .
+    ports:
+      - "4842:4842"
+    environment:
+      OPCUA_PORT: "4842"
+      OPCUA_SERVER_NAME: "CertificateServer"
+      OPCUA_SECURITY_POLICIES: "Basic256Sha256,Aes128_Sha256_RsaOaep,Aes256_Sha256_RsaPss"
+      OPCUA_SECURITY_MODES: "Sign,SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "false"
+      OPCUA_AUTH_USERS: "false"
+      OPCUA_AUTH_CERTIFICATE: "true"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_TRUSTED_CERTS_DIR: "/app/certs/trusted"
+      OPCUA_REJECTED_CERTS_DIR: "/app/certs/rejected"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-all-security:
+    build: .
+    ports:
+      - "4843:4843"
+    environment:
+      OPCUA_PORT: "4843"
+      OPCUA_SERVER_NAME: "AllSecurityServer"
+      OPCUA_SECURITY_POLICIES: "None,Basic128Rsa15,Basic256,Basic256Sha256,Aes128_Sha256_RsaOaep,Aes256_Sha256_RsaPss"
+      OPCUA_SECURITY_MODES: "None,Sign,SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "true"
+      OPCUA_AUTH_CERTIFICATE: "true"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_TRUSTED_CERTS_DIR: "/app/certs/trusted"
+      OPCUA_REJECTED_CERTS_DIR: "/app/certs/rejected"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-discovery:
+    build: .
+    ports:
+      - "4844:4844"
+    environment:
+      OPCUA_PORT: "4844"
+      OPCUA_SERVER_NAME: "DiscoveryServer"
+      OPCUA_IS_DISCOVERY: "true"
+      OPCUA_SECURITY_POLICIES: "None,Basic256Sha256"
+      OPCUA_SECURITY_MODES: "None,SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "false"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-auto-accept:
+    build: .
+    ports:
+      - "4845:4845"
+    environment:
+      OPCUA_PORT: "4845"
+      OPCUA_SERVER_NAME: "AutoAcceptServer"
+      OPCUA_SECURITY_POLICIES: "Basic256Sha256"
+      OPCUA_SECURITY_MODES: "SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "true"
+      OPCUA_AUTH_CERTIFICATE: "true"
+      OPCUA_AUTO_ACCEPT_CERTS: "true"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-sign-only:
+    build: .
+    ports:
+      - "4846:4846"
+    environment:
+      OPCUA_PORT: "4846"
+      OPCUA_SERVER_NAME: "SignOnlyServer"
+      OPCUA_SECURITY_POLICIES: "Basic256Sha256"
+      OPCUA_SECURITY_MODES: "Sign"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "true"
+      OPCUA_AUTH_CERTIFICATE: "false"
+      OPCUA_AUTO_ACCEPT_CERTS: "true"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  opcua-legacy-security:
+    build: .
+    ports:
+      - "4847:4847"
+    environment:
+      OPCUA_PORT: "4847"
+      OPCUA_SERVER_NAME: "LegacySecurityServer"
+      OPCUA_SECURITY_POLICIES: "Basic128Rsa15,Basic256"
+      OPCUA_SECURITY_MODES: "Sign,SignAndEncrypt"
+      OPCUA_ALLOW_ANONYMOUS: "true"
+      OPCUA_AUTH_USERS: "true"
+      OPCUA_AUTH_CERTIFICATE: "false"
+      OPCUA_AUTO_ACCEPT_CERTS: "true"
+      OPCUA_CERTIFICATE_FILE: "/app/certs/server/cert.pem"
+      OPCUA_PRIVATE_KEY_FILE: "/app/certs/server/key.pem"
+      OPCUA_DISCOVERY_URL: "opc.tcp://opcua-discovery:4844"
+    volumes:
+      - certs-volume:/app/certs:ro
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  certs-volume:

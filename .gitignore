@@ -1,0 +1,17 @@
+node_modules/
+pki/
+certs/
+
+*.log
+
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+.DS_Store
+Thumbs.db
+
+.env
+.env.*
