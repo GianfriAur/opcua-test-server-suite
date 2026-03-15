@@ -50,10 +50,13 @@ docker compose up -d
 
 ## Certificate Regeneration
 
-Certificates are auto-generated on first startup by the `certs-generator` container and stored in `./certs/`. To force regeneration:
+Certificates are auto-generated on first startup by the `certs-generator` container and stored in `./certs/`. Subsequent restarts skip the generation if the certificates already exist. To force regeneration:
 
 ```bash
-# Remove the certificates directory and restart
+# Option 1: use FORCE_REGEN
+FORCE_REGEN=1 docker compose up -d
+
+# Option 2: remove the certificates directory and restart
 rm -rf ./certs
 docker compose up -d
 ```
@@ -62,6 +65,9 @@ To generate certificates locally (outside Docker):
 
 ```bash
 bash scripts/generate-certs.sh
+
+# Force regeneration locally
+FORCE_REGEN=1 bash scripts/generate-certs.sh
 ```
 
 ## Network

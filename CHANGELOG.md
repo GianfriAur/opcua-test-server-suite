@@ -1,70 +1,84 @@
 # Changelog
 
+## v1.1.1 — 2026-03-15
+
+### Docker
+
+- **Dockerfile**: Upgraded Node.js from 20 to 24 (Alpine). No breaking changes
+  on dependencies (`node-opcua`, `node-opcua-pki`).
+
+### Certificates
+
+- **generate-certs.sh**: Added skip of certificate regeneration if already
+  present (`ca-cert.pem`, `server/cert.pem`, `client/cert.pem`). Prevents
+  unnecessary regeneration on subsequent `docker compose up`. To force
+  regeneration set `FORCE_REGEN=1` or delete the `certs/` directory.
+
 ## v1.1.0 — 2026-03-14
 
-### GitHub Action e CI
+### GitHub Action & CI
 
-- **action.yml**: Corretto il bug che usava `github.action_repository` (vuoto nei
-  composite action) con fallback su `github.repository`, causando il pull
-  dell'immagine Docker sbagliata (`opcua-php` invece di `opcua-test-server-suite`).
-  Il nome dell'immagine GHCR è ora hardcoded correttamente.
+- **action.yml**: Fixed bug using `github.action_repository` (empty in
+  composite actions) with fallback to `github.repository`, causing the wrong
+  Docker image to be pulled (`opcua-php` instead of `opcua-test-server-suite`).
+  The GHCR image name is now correctly hardcoded.
 
-- **action.yml**: Aggiunto step di login a GHCR con `github.token` per supportare
-  immagini private.
+- **action.yml**: Added GHCR login step with `github.token` to support
+  private images.
 
-- **action.yml**: I certificati vengono ora letti direttamente dal bind mount
-  (`./certs`) invece di estrarli da un Docker volume tramite container temporaneo,
-  eliminando i problemi di nomi di volume non trovati in CI.
+- **action.yml**: Certificates are now read directly from the bind mount
+  (`./certs`) instead of extracting them from a Docker volume via a temporary
+  container, eliminating volume-not-found issues in CI.
 
-- **docker-compose.ci.yml**: Cambiato da Docker volume (`certs-volume`) a bind mount
-  (`./certs`), allineato con `docker-compose.yml`. I certificati sono accessibili
-  direttamente sul filesystem host senza estrazione.
+- **docker-compose.ci.yml**: Changed from Docker volume (`certs-volume`) to bind
+  mount (`./certs`), aligned with `docker-compose.yml`. Certificates are
+  accessible directly on the host filesystem without extraction.
 
-### Certificati e PKI
+### Certificates & PKI
 
-- **generate-certs.sh**: Aggiunta generazione CRL (Certificate Revocation List) per la CA.
-  node-opcua richiede una CRL per verificare lo stato di revoca dei certificati client.
-  Senza CRL, il server rifiuta tutte le connessioni sicure con
-  `BadCertificateRevocationUnknown (0x801b0000)`, anche con `autoAcceptCerts: true`.
+- **generate-certs.sh**: Added CRL (Certificate Revocation List) generation for
+  the CA. node-opcua requires a CRL to verify client certificate revocation
+  status. Without a CRL, the server rejects all secure connections with
+  `BadCertificateRevocationUnknown (0x801b0000)`, even with `autoAcceptCerts: true`.
 
-- **index.js**: Ristrutturata la gestione PKI con `populatePki()`.
-  I certificati CA e la CRL vengono ora copiati nelle directory PKI **prima** di
-  `certificateManager.initialize()`, perché node-opcua indicizza i file CRL
-  durante l'inizializzazione e non li rileva se aggiunti dopo.
+- **index.js**: Restructured PKI management with `populatePki()`.
+  CA certificates and the CRL are now copied into PKI directories **before**
+  `certificateManager.initialize()`, because node-opcua indexes CRL files
+  during initialization and does not detect them if added afterwards.
 
-- **index.js**: Aggiunto `userCertificateManager` per l'autenticazione X509.
-  node-opcua usa due certificate manager separati: uno per il livello trasporto
-  (OPN/SecureChannel) e uno per i token utente (ActivateSession). Senza il
-  secondo, l'autenticazione con certificato X509 fallisce con
+- **index.js**: Added `userCertificateManager` for X509 authentication.
+  node-opcua uses two separate certificate managers: one for the transport layer
+  (OPN/SecureChannel) and one for user tokens (ActivateSession). Without the
+  second one, X509 certificate authentication fails with
   `BadIdentityTokenRejected (0x80210000)`.
 
-- **docker-compose.yml**: Cambiato da Docker volume (`certs-volume`) a bind mount
-  (`./certs`) per rendere i certificati generati accessibili dall'host, necessario
-  per i test di integrazione che referenziano direttamente i file certificato.
+- **docker-compose.yml**: Changed from Docker volume (`certs-volume`) to bind
+  mount (`./certs`) to make generated certificates accessible from the host,
+  required for integration tests that reference certificate files directly.
 
 ### Address Space
 
-- **events-alarms.js**: Corretta la creazione degli allarmi.
-  - `alarmsFolder` registrato come event source sul server object con
-    `HasEventSource` reference e `setEventNotifier(1)`, necessario perché
-    node-opcua richiede che il `conditionSource` sia un event source valido.
-  - Cambiato `conditionSource` da `alarmSource` (variabile) a `alarmsFolder`
-    (folder) per tutti e 3 gli allarmi.
-  - Corretta la chiamata `instantiateOffNormalAlarm`: rimosso il primo argomento
-    stringa `"OffNormalAlarmType"` (il metodo di namespace lo include già) e
-    passati `nodeId` invece di oggetti per `inputNode` e `normalState`.
+- **events-alarms.js**: Fixed alarm creation.
+  - `alarmsFolder` registered as event source on the server object with
+    `HasEventSource` reference and `setEventNotifier(1)`, required because
+    node-opcua requires the `conditionSource` to be a valid event source.
+  - Changed `conditionSource` from `alarmSource` (variable) to `alarmsFolder`
+    (folder) for all 3 alarms.
+  - Fixed the `instantiateOffNormalAlarm` call: removed the first string
+    argument `"OffNormalAlarmType"` (the namespace method already includes it)
+    and passed `nodeId` instead of objects for `inputNode` and `normalState`.
 
-- **historical.js**: Aggiunte chiamate `setValueFromSource()` nel `setInterval`.
-  L'aggiornamento delle variabili locali non basta: node-opcua registra i dati
-  storici solo quando il valore viene impostato tramite `setValueFromSource()`,
-  che triggera il meccanismo interno di historical data recording.
+- **historical.js**: Added `setValueFromSource()` calls in `setInterval`.
+  Updating local variables is not enough: node-opcua only records historical
+  data when the value is set via `setValueFromSource()`, which triggers the
+  internal historical data recording mechanism.
 
-- **access-control.js**: Aggiunti `rolePermissions` alle variabili OperatorLevel
-  (`Setpoint`, `MotorSpeed`, `ProcessEnabled`). Senza permessi per ruolo,
-  node-opcua permette la scrittura a qualsiasi utente autenticato, impedendo
-  di testare le restrizioni di accesso basate su ruoli.
+- **access-control.js**: Added `rolePermissions` to OperatorLevel variables
+  (`Setpoint`, `MotorSpeed`, `ProcessEnabled`). Without role permissions,
+  node-opcua allows writes from any authenticated user, preventing testing of
+  role-based access restrictions.
 
-- **data-types.js**: Cambiato il valore di `Int64Value` da `[0, -1000000]` a
-  `[0, 1000000]`. Il formato `[high, low]` di node-opcua per Int64 non supporta
-  valori negativi nella parte `low`, causando un crash del server con
-  `ERR_OUT_OF_RANGE` durante la serializzazione binaria.
+- **data-types.js**: Changed the value of `Int64Value` from `[0, -1000000]` to
+  `[0, 1000000]`. node-opcua's `[high, low]` format for Int64 does not support
+  negative values in the `low` part, causing a server crash with
+  `ERR_OUT_OF_RANGE` during binary serialization.
