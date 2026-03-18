@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.3 — 2026-03-18
+
+### Actions
+
+- **docker-publish.yml**: Updated Docker actions to Node.js 24-compatible
+  versions: `docker/setup-buildx-action` v3→v4, `docker/login-action` v3→v4,
+  `docker/metadata-action` v5→v6, `docker/build-push-action` v5→v6.
+
 ## v1.1.2 — 2026-03-16
 
 ### Actions

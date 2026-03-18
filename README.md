@@ -76,7 +76,7 @@ This repository is also a **reusable GitHub Action**. Add a single step to your 
 steps:
   - uses: actions/checkout@v4
 
-  - uses: GianfriAur/opcua-test-server-suite@v1
+  - uses: GianfriAur/opcua-test-server-suite@v1.1.3
 
   - run: cargo test  # or npm test, pytest, dotnet test, etc.
 ```
@@ -85,7 +85,7 @@ You can select which servers to start, set timeouts, and access the generated ce
 
 ```yaml
 - id: opcua
-  uses: GianfriAur/opcua-test-server-suite@v1
+  uses: GianfriAur/opcua-test-server-suite@v1.1.3
   with:
     servers: 'no-security,userpass,certificate'
     wait-timeout: '90'
@@ -94,6 +94,8 @@ You can select which servers to start, set timeouts, and access the generated ce
   env:
     OPCUA_CERTS_DIR: ${{ steps.opcua.outputs.certs-dir }}
 ```
+
+For real-world usage examples, see the CI workflows in [opcua-php-client](https://github.com/GianfriAur/opcua-php-client), [opcua-php-client-session-manager](https://github.com/GianfriAur/opcua-php-client-session-manager), and [opcua-laravel-client](https://github.com/GianfriAur/opcua-laravel-client).
 
 For the full integration guide with all options, certificate usage, version pinning, and examples for other CI systems (GitLab, Jenkins), see **[docs/ci-integration.md](docs/ci-integration.md)**.
 
@@ -130,10 +132,14 @@ Detailed documentation is available in the [`docs/`](docs/) folder:
 | `viewer` | `viewer123` | Read-only |
 | `test` | `test` | Full access (convenience) |
 
+## Support
+
+For bug reports, feature requests, or questions, please open an issue on [GitHub Issues](https://github.com/GianfriAur/opcua-test-server-suite/issues).
+
 ## AI Disclosure
 
 This project was built in part with the assistance of **Claude** (Anthropic). The AI contributed to code generation, documentation writing, and architecture decisions. All outputs were reviewed and validated by the author. The [AI Reference](docs/AI_REFERENCE.md) document was specifically designed to be consumed by AI coding assistants working with this project.
 
 ## License
 
-This project is open source. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).

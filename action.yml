@@ -1,5 +1,5 @@
 name: 'OPC UA Test Server Suite'
-description: 'Start OPC UA test servers for integration testing. Provides 8 pre-configured servers on ports 4840-4847 covering all security/auth scenarios.'
+description: 'Start 8 pre-configured OPCUA/OPC UA test servers covering all security policies and auth methods.'
 author: 'GianfriAur'
 
 branding:

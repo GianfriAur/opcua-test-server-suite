@@ -174,3 +174,4 @@ services:
     depends_on:
       certs-generator:
         condition: service_completed_successfully
+
