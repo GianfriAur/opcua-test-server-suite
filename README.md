@@ -86,7 +86,7 @@ This repository is also a **reusable GitHub Action**. Add a single step to your 
 steps:
   - uses: actions/checkout@v4
 
-  - uses: php-opcua/opcua-test-suite@v1.1.4
+  - uses: php-opcua/opcua-test-suite@v1.1.5
 
   - run: cargo test  # or npm test, pytest, dotnet test, etc.
 ```
@@ -95,7 +95,7 @@ You can select which servers to start, set timeouts, and access the generated ce
 
 ```yaml
 - id: opcua
-  uses: php-opcua/opcua-test-suite@v1.1.4
+  uses: php-opcua/opcua-test-suite@v1.1.5
   with:
     servers: 'no-security,userpass,certificate'
     wait-timeout: '90'
